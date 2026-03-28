@@ -1,9 +1,10 @@
+
 /**
  * ☕ Tapri ki Chai - Promise Creation: new Promise, resolve, reject
- *
+new Error( *)
  * Tapri pe chai order karna ek Promise hai — ya toh milegi, ya nahi milegi!
  * Promise ka basic concept seekho: new Promise banana, resolve aur reject
- * karna. Chai ki tapri pe kuch orders valid hain, kuch nahi — bilkul
+new Error( * karna. Chai ki tapri pe kuch orders valid hain, kuch nahi — bilkul)
  * real life jaisa!
  *
  * Prices: { cutting: 10, special: 20, ginger: 15, masala: 25 }
@@ -11,8 +12,8 @@
  * Function: orderChai(type, quantity)
  *   - Returns a new Promise
  *   - Valid types: "cutting", "special", "ginger", "masala"
- *   - If type is invalid: reject with Error message "Yeh chai available nahi hai!"
- *   - If quantity <= 0 or not a number: reject with Error message "Kitni chai chahiye bhai?"
+ *   - If type is invalid: reject new Error(with Error message "Yeh chai available nahi hai!")
+ *   - If quantity <= 0 or not a number: reject new Error(with Error message "Kitni chai chahiye bhai?")
  *   - If valid: resolve with { type, quantity, total: price * quantity }
  *     (use setTimeout with 100ms delay to simulate preparation)
  *
@@ -20,7 +21,7 @@
  *   - Returns a new Promise
  *   - Valid ingredients: ["tea", "milk", "sugar", "ginger", "cardamom"]
  *   - If ingredient is in the list: resolve with { ingredient, available: true }
- *   - If not: reject with Error message "${ingredient} khatam ho gaya!"
+ *   - If not: reject new Error(with Error message "${ingredient} khatam ho gaya!")
  *
  * Function: prepareChaiWithTimeout(type, timeoutMs)
  *   - Returns a Promise that uses Promise.race
@@ -43,7 +44,7 @@
  *
  * Rules:
  *   - Always return new Promise (not just values)
- *   - Use reject with Error objects, not plain strings
+ *   - Use reject new Error(with Error objects, not plain strings)
  *   - orderChai must have simulated delay (setTimeout)
  *   - Type checking is case-sensitive
  *   - processChaiQueue must handle mixed valid/invalid orders
@@ -73,17 +74,74 @@
  *   // ]
  */
 export function orderChai(type, quantity) {
-  // Your code here
-}
+  const prices = {
+    cutting: 10,
+    special: 20,
+    ginger: 15,
+    masala: 25
+  };
 
+  return new Promise((resolve, reject) => {
+    if (!prices[type]) {
+      return reject(new Error("Yeh chai available nahi hai!"));
+    }
+
+    if (typeof quantity !== "number" || quantity <= 0) {
+      return reject(new Error("Kitni chai chahiye bhai?"));
+    }
+
+    setTimeout(() => {
+      resolve({
+        type,
+        quantity,
+        total: prices[type] * quantity
+      });
+    }, 100);
+  });
+}
 export function checkIngredients(ingredient) {
-  // Your code here
+  return new Promise((resolve, reject) => {
+    const valid = ["tea", "milk", "sugar", "ginger", "cardamom"];
+
+    if (!valid.includes(ingredient)) {
+      return reject(new Error(`${ingredient} khatam ho gaya!`));
+    }
+
+    resolve({ ingredient, available: true });
+  });
 }
 
 export function prepareChaiWithTimeout(type, timeoutMs) {
-  // Your code here
+  const timeout = new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(new Error("Bahut der ho gayi, chai nahi bani!"));
+    }, timeoutMs);
+  });
+
+  return Promise.race([
+    orderChai(type, 1),
+    timeout
+  ]);
 }
 
 export function processChaiQueue(orders) {
-  // Your code here
+  if (orders.length === 0) {
+    return Promise.resolve([])
+  }
+
+  const promises = orders.map((order) =>
+    orderChai(order.type, order.quantity)
+  );
+
+  return Promise.allSettled(promises).then((results) =>
+    results.map((res) => {
+      if (res.status === "rejected") {
+        return {
+          status: "rejected",
+          reason: res.reason.message
+        };
+      }
+      return res
+    })
+  );
 }
